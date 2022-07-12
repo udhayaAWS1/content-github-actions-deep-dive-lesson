@@ -1,4 +1,3 @@
-name: Deploy my Lambda Function
 
 # trigger on all push events to main branch
 on: 
@@ -30,3 +29,21 @@ jobs:
         with:
           name: zipped-bundle
           path: ${{ github.sha }}.zip
+
+  upload:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Download artifcats
+        uses: actions/upload-artifact@v2
+        with:
+          name: zipped-bundle
+      - name: configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{secret.AWS_ACCESS_KEY_ID}}
+          aws-secret-access-key: ${{secrets.AWS_SECRET_ACCESS_KEY}}
+          aws-region: us-east-1
+      - name: upload to s3
+        run: aws s3 cp ${{github.sha}}.zip s3://bucket-no/${{github.sha}}.zip
+
